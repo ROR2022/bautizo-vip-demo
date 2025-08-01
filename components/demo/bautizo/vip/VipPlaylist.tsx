@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Play, Pause, SkipBack, SkipForward, Volume2, Heart, Sparkles } from 'lucide-react'
 import { useMusicContext } from '@/context/music-context'
 import { vipDemoData } from './data/vip-demo-data'
@@ -8,44 +8,75 @@ import { vipDemoData } from './data/vip-demo-data'
 export function VipPlaylist() {
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
-  const [volume, setVolume] = useState(0.7)
-  const { isPlaying, togglePlay, isClient } = useMusicContext()
+  const { isPlaying, togglePlay, isClient, currentTrack: currentAudioTrack, setCurrentTrack, volume, setVolume } = useMusicContext()
 
   const currentCategory = vipDemoData.playlist.categories[currentCategoryIndex]
   const currentTrack = currentCategory?.tracks[currentTrackIndex]
+
+  // Establecer la primera canción al montar el componente
+  useEffect(() => {
+    if (isClient && currentTrack?.file && currentAudioTrack !== currentTrack.file) {
+      setCurrentTrack(currentTrack.file)
+    }
+  }, [isClient, currentTrack?.file, currentAudioTrack, setCurrentTrack])
 
   const handlePlayPause = () => {
     togglePlay()
   }
 
   const handlePrevious = () => {
+    let newCategoryIndex = currentCategoryIndex
+    let newTrackIndex = currentTrackIndex
+    
     if (currentTrackIndex > 0) {
-      setCurrentTrackIndex(prev => prev - 1)
+      newTrackIndex = currentTrackIndex - 1
     } else if (currentCategoryIndex > 0) {
-      setCurrentCategoryIndex(prev => prev - 1)
-      setCurrentTrackIndex(vipDemoData.playlist.categories[currentCategoryIndex - 1].tracks.length - 1)
+      newCategoryIndex = currentCategoryIndex - 1
+      newTrackIndex = vipDemoData.playlist.categories[newCategoryIndex].tracks.length - 1
     } else {
-      const lastCategory = vipDemoData.playlist.categories.length - 1
-      setCurrentCategoryIndex(lastCategory)
-      setCurrentTrackIndex(vipDemoData.playlist.categories[lastCategory].tracks.length - 1)
+      newCategoryIndex = vipDemoData.playlist.categories.length - 1
+      newTrackIndex = vipDemoData.playlist.categories[newCategoryIndex].tracks.length - 1
+    }
+    
+    setCurrentCategoryIndex(newCategoryIndex)
+    setCurrentTrackIndex(newTrackIndex)
+    
+    const selectedTrack = vipDemoData.playlist.categories[newCategoryIndex]?.tracks[newTrackIndex]
+    if (selectedTrack?.file) {
+      setCurrentTrack(selectedTrack.file)
     }
   }
 
   const handleNext = () => {
+    let newCategoryIndex = currentCategoryIndex
+    let newTrackIndex = currentTrackIndex
+    
     if (currentTrackIndex < currentCategory.tracks.length - 1) {
-      setCurrentTrackIndex(prev => prev + 1)
+      newTrackIndex = currentTrackIndex + 1
     } else if (currentCategoryIndex < vipDemoData.playlist.categories.length - 1) {
-      setCurrentCategoryIndex(prev => prev + 1)
-      setCurrentTrackIndex(0)
+      newCategoryIndex = currentCategoryIndex + 1
+      newTrackIndex = 0
     } else {
-      setCurrentCategoryIndex(0)
-      setCurrentTrackIndex(0)
+      newCategoryIndex = 0
+      newTrackIndex = 0
+    }
+    
+    setCurrentCategoryIndex(newCategoryIndex)
+    setCurrentTrackIndex(newTrackIndex)
+    
+    const selectedTrack = vipDemoData.playlist.categories[newCategoryIndex]?.tracks[newTrackIndex]
+    if (selectedTrack?.file) {
+      setCurrentTrack(selectedTrack.file)
     }
   }
 
   const handleTrackSelect = (categoryIndex: number, trackIndex: number) => {
     setCurrentCategoryIndex(categoryIndex)
     setCurrentTrackIndex(trackIndex)
+    const selectedTrack = vipDemoData.playlist.categories[categoryIndex]?.tracks[trackIndex]
+    if (selectedTrack?.file) {
+      setCurrentTrack(selectedTrack.file)
+    }
   }
 
   const formatTime = (timeString: string) => {
